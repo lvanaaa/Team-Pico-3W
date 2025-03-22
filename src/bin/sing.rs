@@ -3,8 +3,6 @@
 // |                            Sing your own tune                             |
 // +---------------------------------------------------------------------------+
 
-//! By default, this app blinks and LED connected to the `GP4` pin.
-
 #![no_std]
 #![no_main]
 

@@ -121,6 +121,12 @@ name = "hi"
 [[bin]]
 name = "sing"
 
+[[bin]]
+name = "thermometer"
+
+[[bin]]
+name = "wave"
+
 # This table is used to specify the member crates of this workspace.
 [workspace]
 members = ["./embassy-utils"]
