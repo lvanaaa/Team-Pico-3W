@@ -7,7 +7,6 @@ use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_futures::select;
 use embassy_rp::gpio::{Input, Level, Output, Pull};
-use embassy_rp::peripherals;
 use embassy_rp::pwm::{Config as ConfigPmw, Pwm};
 use embassy_time::Timer;
 use fixed::traits::ToFixed;
@@ -94,32 +93,33 @@ fn get_note(note_frec: u64) -> u64 {
 
 
 #[embassy_executor::main]
-async fn main(spawner: Spawner) {
-    let p = embassy_rp::init(Default::default());
-     let mut config: ConfigPmw = Default::default();
-     config.divider = PWM_DIV.to_fixed();
-     config.top = 0x9088;
-     let mut pwm = Pwm::new_output_b(p.PWM_SLICE1, p.PIN_3, config.clone());
-     let song = Song::new(200);
-     loop {
-         for note in MELODY {
-             if note.0 == REST {
-                 let note_dur = song.calc_note_duration(note.1) as u64;
-                 Timer::after_millis((note_dur as f64 * 0.9) as u64).await;
-                 config.compare_b = 0;
-                 Timer::after_millis((note_dur as f64 * 0.1) as u64).await;
-                 continue;
-             }
+async fn main(_spawner: Spawner) {
+    let peripherals = embassy_rp::init(Default::default());
 
-             config.top = (get_note(note.0 as u64)) as u16;
-             config.compare_b = config.top / 2;
-             info!("{}", note.0);
-             pwm.set_config(&config);
-             let note_dur = song.calc_note_duration(note.1) as u64;
-             Timer::after_millis((note_dur as f64 * 0.9) as u64).await;
-             config.compare_b = 0;
-             Timer::after_millis((note_dur as f64 * 0.1) as u64).await;
-         }
-     }
+    let mut config: ConfigPmw = Default::default();
+    config.divider = PWM_DIV.to_fixed();
+    config.top = 0x9088;
+
+    let mut pwm = Pwm::new_output_b(peripherals.PWM_SLICE1, peripherals.PIN_3, config.clone());
+    let song = Song::new(200);
+    loop {
+        for note in MELODY {
+            if note.0 == REST {
+                let note_dur = song.calc_note_duration(note.1) as u64;
+                Timer::after_millis((note_dur as f64 * 0.9) as u64).await;
+                config.compare_b = 0;
+                Timer::after_millis((note_dur as f64 * 0.1) as u64).await;
+                continue;
+            }
+
+            config.top = (get_note(note.0 as u64)) as u16;
+            config.compare_b = config.top / 2;
+            info!("{}", note.0);
+            pwm.set_config(&config);
+            let note_dur = song.calc_note_duration(note.1) as u64;
+            Timer::after_millis((note_dur as f64 * 0.9) as u64).await;
+            config.compare_b = 0;
+            Timer::after_millis((note_dur as f64 * 0.1) as u64).await;
+        }
     }
-    
+}
